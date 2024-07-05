@@ -1,11 +1,7 @@
-mod helper;
 mod events {
     pub mod toggle_scratch;
     pub mod close_window;
     pub mod move_focus;
-    // pub mod eww_todo_add;
-    pub mod eww_todo_getall;
-    pub mod eww_open;
 }
 mod global_state;
 mod hyprsocket;
@@ -21,8 +17,6 @@ use std::fs::remove_file;
 use crate::events::toggle_scratch::ToggleScratch;
 use crate::events::close_window::CloseWindow;
 use crate::events::move_focus::MoveFocus;
-use crate::events::eww_todo_getall::EwwTodoGetall;
-use crate::events::eww_open::EwwOpen;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -74,8 +68,6 @@ async fn handle_command(input: String, state: Arc<GlobalState>, client: Arc<Hypr
         "toggle_scratch" => ToggleScratch::handle(&args, state, client).await,
         "close_window" => CloseWindow::handle(&args, state, client).await,
         "move_focus" => MoveFocus::handle(&args, state, client).await,
-        "eww_todo_getall" => EwwTodoGetall::handle(&args, state, client).await,
-        "eww_open" => EwwOpen::handle(&args, state, client).await,
         _ => Err(format!("Unknown event: {}", event).into()),
     }
 }
