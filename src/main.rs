@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let client = Arc::new(Hyprsocket::new().await?);
 
 
-    let socket_path = "/tmp/event_handler_test.sock";
+    let socket_path = "/tmp/event_handler.sock";
 
     let _ = remove_file(socket_path);
     let listener = UnixListener::bind(socket_path)?;
