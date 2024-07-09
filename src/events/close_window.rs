@@ -28,6 +28,9 @@ impl CloseWindow {
                 Err(e) => return Err(e.into()),
             }
         }
+        else if class == "com.obsproject.Studio" {
+            return Ok("do nothing for obs studio".to_string());
+        }
         else {
             match client.sends_silent(&["dispatch killactive"]).await {
                 Ok(_) => return Ok(format!("killactive for window {}", address)),
