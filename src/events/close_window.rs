@@ -8,24 +8,24 @@ pub struct CloseWindow;
 
 impl CloseWindow {
     pub async fn handle(args: &[String], _state: Arc<GlobalState>, client: Arc<Hyprsocket>) -> Result<String, Box<dyn Error>> {
-        if args.len() != 0 {
+        if !args.is_empty() {
             return Err("close_window requires exactly 0 argument".into());
         }
         let x = match client.send("j/activewindow").await {
             Ok(output) => output,
             Err(e) => {
                 eprintln!("Error sending command: {}", e);
-                return Err(e.into());
+                return Err(e);
             },
         };
         let json: Value = serde_json::from_str(&x)?;
         let address = json["address"].as_str().unwrap_or("Unknown address");
         let class = json["class"].as_str().unwrap_or("Unknown class");
 
-        if class == "kitty" || class == "firefox" {
+        if class == "kitty" || class == "firefox" || class == "sublime_text" {
             match client.sends_silent(&[format!("dispatch sendshortcut CONTROL, W, address:{}", address).as_str()]).await {
-                Ok(_) => return Ok(format!("close_window for window {}", address)),
-                Err(e) => return Err(e.into()),
+                Ok(_) => Ok(format!("close_window for window {}", address)),
+                Err(e) => Err(e),
             }
         }
         else if class == "com.obsproject.Studio" {
@@ -33,8 +33,8 @@ impl CloseWindow {
         }
         else {
             match client.sends_silent(&["dispatch killactive"]).await {
-                Ok(_) => return Ok(format!("killactive for window {}", address)),
-                Err(e) => return Err(e.into()),
+                Ok(_) => Ok(format!("killactive for window {}", address)),
+                Err(e) => Err(e),
             }
         }
     }

@@ -1,7 +1,14 @@
+// run  := cargo run
+// dir  := .
+// kid  := 
+
 mod events {
     pub mod toggle_scratch;
     pub mod close_window;
     pub mod move_focus;
+    pub mod switch_master_side;
+    pub mod move_sublime_text;
+    pub mod magnifier;
 }
 mod global_state;
 mod hyprsocket;
@@ -9,6 +16,7 @@ mod hyprsocket;
 use hyprsocket::Hyprsocket;
 use global_state::GlobalState;
 use std::sync::Arc;
+use std::env;
 use tokio::net::UnixListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::error::Error;
@@ -17,15 +25,20 @@ use std::fs::remove_file;
 use crate::events::toggle_scratch::ToggleScratch;
 use crate::events::close_window::CloseWindow;
 use crate::events::move_focus::MoveFocus;
+use crate::events::switch_master_side::SwitchMasterSide;
+use crate::events::move_sublime_text::MoveSublimeText;
+use crate::events::magnifier::Magnifier;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let client = Arc::new(Hyprsocket::new().await?);
 
+    let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "/tmp".to_string());
 
-    let socket_path = "/tmp/event_handler.sock";
+    let socket_path = format!("{}/event_handler.sock", xdg_runtime_dir);
+    eprintln!("Socket path: {}", socket_path);
 
-    let _ = remove_file(socket_path);
+    let _ = remove_file(&socket_path);
     let listener = UnixListener::bind(socket_path)?;
 
     let state = Arc::new(GlobalState::new());
@@ -63,11 +76,13 @@ async fn handle_command(input: String, state: Arc<GlobalState>, client: Arc<Hypr
 
     let event = parts[0];
     let args = parts[1..].iter().map(|s| s.to_string()).collect::<Vec<String>>();
-
     match event {
         "toggle_scratch" => ToggleScratch::handle(&args, state, client).await,
         "close_window" => CloseWindow::handle(&args, state, client).await,
         "move_focus" => MoveFocus::handle(&args, state, client).await,
+        "switch_master_side" => SwitchMasterSide::handle(&args, state, client).await,
+        "move_sublime_text" => MoveSublimeText::handle(&args, state, client).await,
+        "magnifier" => Magnifier::handle(&args, state, client).await,
         _ => Err(format!("Unknown event: {}", event).into()),
     }
 }
